@@ -1,0 +1,328 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
+from sdj import*
+
+global WINBIND
+
+def mainDomain():
+	
+	class Handler:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+		
+		def onButton1Pressed(self, button1):
+			global WINBIND
+			if (WINBIND > 0):
+				winbind_on()
+			else:
+				winbind_off()
+			entry1 = builder.get_object("entry1")
+			entry2 = builder.get_object("entry2")
+			host = entry1.get_text()
+			realm = entry2.get_text()
+			if(radio2.get_active()):
+				rlist = list()
+				rlist = get_actual_realm(realm)
+				if(rlist[0] == "error"):
+					builderInvIp.add_from_file("glades/domain_invalid_ip.glade")
+					windowInvIp = builderInvIp.get_object("window1")
+					windowInvIp.show_all()
+					builderInvIp.connect_signals(HandlerInvIp())
+				else:
+					realm = rlist[0]
+					workgroup = rlist[1]
+					set_hostname(host)
+					set_hosts(host, realm)
+					set_samba(host, realm, workgroup)
+					set_kerberos(realm)
+					add_host()
+					add_server()
+					builder2.add_from_file("glades/domain_add.glade")
+					window2 = builder2.get_object("window1")
+					button_add_confirm = builder2.get_object("button1")
+					entry_add_passw = builder2.get_object("entry2")
+					entry_add_passw.set_activates_default(True)
+					button_add_confirm.set_can_default(True)
+					button_add_confirm.grab_default()
+					window2.show_all()
+					builder2.connect_signals(Handler2())
+			else:
+				current_name = get_hostname()
+				current_workgroup = get_workgroup()
+				set_hostname(host)
+				update_hosts(host)
+				update_samba(host)
+				builder3.add_from_file("glades/domain_update_host.glade")
+				window3 = builder3.get_object("window1")
+				label = builder3.get_object("label1")
+				if not(current_workgroup == get_workgroup()) and not(current_name == get_hostname()):
+					label.set_text("Domain has changed to local\nHostname has updated to \""+host+"\".")
+				elif not(current_name == get_hostname()) and (current_workgroup == get_workgroup()):
+					label.set_text("Hostname has updated to \""+host+"\".")
+				elif not(current_workgroup == get_workgroup()) and (current_name == get_hostname()):
+					label.set_text("Domain has changed to local.")
+				else:
+					label.set_text("Nothing has changed.")
+				window3.show_all()
+				builder3.connect_signals(Handler3())
+		
+		def onButton2Pressed(self, radiobutton2):
+			entry2 = builder.get_object("entry2")
+			entry2.set_editable(True)
+			act_win(1)
+		
+		def onButton3Pressed(self, radiobutton1):
+			entry2 = builder.get_object("entry2")
+			entry2.set_editable(False)
+			act_win(0)
+		
+		def onButton4Pressed(self, button4):
+			window2 = builder.get_object("window1")
+			window2.destroy()
+			
+		def onButton5Pressed(self, button_about):
+			builderAbout.add_from_file("glades/about.glade")
+			aboutWindow = builderAbout.get_object("window1")
+			revealer = builderAbout.get_object("revealer1")
+			licenseButton = builderAbout.get_object("button1")
+			licenseButton.connect("clicked", reveal)
+			devButton = builderAbout.get_object("button2")
+			devButton.connect("clicked", reveal)
+			linkButton = builderAbout.get_object("linkButton")
+			linkButton.set_label("GitHub Link")
+			builderAbout.connect_signals(AboutHandler())
+			aboutWindow.show_all()
+		
+
+	class Handler2:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+		
+		def onButton1Pressed(self, button1):
+			entry1 = builder2.get_object("entry1")
+			entry2 = builder2.get_object("entry2")
+			entry3 = builder.get_object("entry2")
+			host = entry1.get_text()
+			password_host = entry2.get_text()
+			realm = entry3.get_text()
+			output = add_to_domain(host, realm, password_host)
+			configure_pam()
+			configure_kerberos()
+			check = confirm()
+			print (check)
+			if((("Joined") in check) and (("to dns domain") in check)):
+				builder_success.add_from_file("glades/domain_success.glade")
+				window = builder_success.get_object("window1")
+				text = confirm()
+				ltest = list()
+				buffer_text = ""
+				for c in text:
+					if(c == "\n"):
+						ltest.append(buffer_text)
+						buffer_text = ""
+					else:
+						buffer_text = buffer_text + c
+				for line in ltest:
+					if ("Joined") in line:
+						text1 = line
+				label = builder_success.get_object("label1")
+				label.set_text(text1)
+				window.show_all()
+				builder_success.connect_signals(HandlerSuccess())
+				window2 = builder2.get_object("window1")
+				window2.destroy()
+			elif(("No credentials cache found")in output):
+				builder_err5.add_from_file("glades/domain_err5.glade")
+				window = builder_err5.get_object("window1")
+				window.show_all()
+				builder_err5.connect_signals(HandlerError5())
+			elif(("Our netbios name can be at most 15 chars long")in output):
+				builder_err6.add_from_file("glades/domain_err6.glade")
+				window = builder_err6.get_object("window1")
+				window.show_all()
+				builder_err6.connect_signals(HandlerError6())
+			elif(("Client's credentials have been revoked while getting initial credentials") in output):
+				builder_err1.add_from_file("glades/domain_err1.glade")
+				window = builder_err1.get_object("window1")
+				window.show_all()
+				builder_err1.connect_signals(HandlerError1())
+			elif(("Password incorrect while getting initial credentials") in output):
+				builder_err2.add_from_file("glades/domain_err2.glade")
+				window = builder_err2.get_object("window1")
+				window.show_all()
+				builder_err2.connect_signals(HandlerError2())
+			elif(("failed to find DC for domain") in output):
+				builder_err3.add_from_file("glades/domain_err3.glade")
+				window = builder_err3.get_object("window1")
+				window.show_all()
+				builder_err3.connect_signals(HandlerError3())
+			elif(("Logon failure") in output):
+				builder_err4.add_from_file("glades/domain_err4.glade")
+				window = builder_err4.get_object("window1")
+				window.show_all()
+				builder_err4.connect_signals(HandlerError4())
+			else:
+				builder_success.add_from_file("glades/domain_success.glade")
+				window = builder_success.get_object("window1")
+				text = confirm()
+				ltest = list()
+				buffer_text = ""
+				for c in text:
+					if(c == "\n"):
+						ltest.append(buffer_text)
+						buffer_text = ""
+					else:
+						buffer_text = buffer_text + c
+				for line in ltest:
+					if ("Joined") in line:
+						text1 = line
+				label = builder_success.get_object("label1")
+				label.set_text(text1)
+				window.show_all()
+				builder_success.connect_signals(HandlerSuccess())
+				window2 = builder2.get_object("window1")
+				window2.destroy()
+		
+		def onButton2Pressed(self, button2):
+			window2 = builder2.get_object("window1")
+			window2.destroy()
+	
+	class HandlerError1:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+		def onButton1Pressed(self, button1):
+			window = builder_err1.get_object("window1")
+			window.destroy()
+	class HandlerError2:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+		def onButton1Pressed(self, button1):
+			window = builder_err2.get_object("window1")
+			window.destroy()
+	class HandlerError3:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+		def onButton1Pressed(self, button1):
+			window = builder_err3.get_object("window1")
+			window.destroy()
+	class HandlerError4:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+		def onButton1Pressed(self, button1):
+			window = builder_err4.get_object("window1")
+			window.destroy()
+	class HandlerError5:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+		def onButton1Pressed(self, button1):
+			window = builder_err5.get_object("window1")
+			window.destroy()
+	class HandlerError6:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+		def onButton1Pressed(self, button1):
+			window = builder_err6.get_object("window1")
+			window.destroy()
+	class HandlerSuccess:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+		def onButton1Pressed(self, button1):
+			window = builder_success.get_object("window1")
+			window.destroy()
+	class Handler3:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+		def onButton1Pressed(self, button1):
+			window = builder3.get_object("window1")
+			window.destroy()
+	
+	class AboutHandler:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+			
+		def onButton3Pressed(self, button3):
+			aboutWindow = builderAbout.get_object("window1")
+			aboutWindow.destroy()
+	
+		def onButton1Pressed(self, button1):
+			lis = ""
+			with open("license.txt", "r") as license_text:
+				for line in license_text:
+					lis = lis + line
+			text = builderAbout.get_object("text1")
+			textbuffer = text.get_buffer()
+			textbuffer.set_text(lis)
+	
+		def onButton2Pressed(self, button2):
+			text = builderAbout.get_object("text1")
+			textbuffer = text.get_buffer()
+			textbuffer.set_text("				Emre Balcı")
+	
+	class HandlerInvIp:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+		
+		def onButton1Pressed(self, button1):
+			windowInvIp = builderInvIp.get_object("window1")
+			windowInvIp.destroy()
+	
+	def reveal(self):
+		revealer = builderAbout.get_object("revealer1")
+		revealer.set_reveal_child(not revealer.get_reveal_child())
+	
+	def act_win(arg):
+		global WINBIND
+		WINBIND = arg
+	
+	global WINBIND
+	builder = Gtk.Builder()
+	builder2 = Gtk.Builder()
+	builder_err1 = Gtk.Builder()
+	builder_err2 = Gtk.Builder()
+	builder_err3 = Gtk.Builder()
+	builder_err4 = Gtk.Builder()
+	builder_err5 = Gtk.Builder()
+	builder_err6 = Gtk.Builder()
+	builder_success = Gtk.Builder()
+	builder3 = Gtk.Builder()
+	builderAbout = Gtk.Builder()
+	builderInvIp = Gtk.Builder()
+	builder.add_from_file("glades/domain.glade")
+	window = builder.get_object("window1")
+	cancel_button = builder.get_object("cancel_button")
+	label = builder.get_object("label1")
+	radio1 = builder.get_object("radiobutton1")
+	radio2 = builder.get_object("radiobutton2")
+	entry_username = builder.get_object("entry1")
+	entry_realm = builder.get_object("entry2")
+	host = get_hostname()
+	entry_username.set_text(host)
+	entry_realm.set_text(get_realm().replace("\n",""))
+	winbind = nsswitch_check()
+	if (winbind == "removed"):
+		radio1.set_active(True)
+		radio2.set_active(False)
+		entry2 = builder.get_object("entry2")
+		entry2.set_editable(False)
+		WINBIND = 0
+	else:
+		radio1.set_active(False)
+		radio2.set_active(True)
+		entry2 = builder.get_object("entry2")
+		entry2.set_editable(True)
+		WINBIND = 1
+	button_confirm = builder.get_object("button1")
+	entry_realm.set_activates_default(True)
+	entry_username.set_activates_default(True)
+	button_confirm.set_can_default(True)
+	button_confirm.grab_default()
+	window.show_all()
+	builder.connect_signals(Handler())
+	window.connect("destroy", Gtk.main_quit)
+	Gtk.main()
+
+mainDomain()
