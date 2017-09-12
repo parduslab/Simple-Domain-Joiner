@@ -18,8 +18,6 @@ python3 simple-domain-joiner.py
 ```
 ### Manual
 
-Enter the computer name and the domain address.
-
 ![alt text](https://github.com/PardusGenc/Simple-Domain-Joiner/blob/master/screenshots/sdj_main1.png)
 
 ![alt text](https://github.com/PardusGenc/Simple-Domain-Joiner/blob/master/screenshots/sdj_adddomain.png)
