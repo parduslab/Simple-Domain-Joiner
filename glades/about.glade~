@@ -70,7 +70,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="uri">https://github.com/PardusGenc/Simple-Domain-Joiner</property>
+                <property name="uri">http://glade.gnome.org</property>
               </object>
               <packing>
                 <property name="expand">True</property>

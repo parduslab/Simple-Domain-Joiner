@@ -100,7 +100,7 @@ def mainDomain():
 			devButton = builderAbout.get_object("button2")
 			devButton.connect("clicked", reveal)
 			linkButton = builderAbout.get_object("linkButton")
-			linkButton.set_label("GitHub Link")
+			linkButton.set_label("Project link")
 			builderAbout.connect_signals(AboutHandler())
 			aboutWindow.show_all()
 		
