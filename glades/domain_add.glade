@@ -151,7 +151,6 @@
                     <property name="receives_default">True</property>
                     <property name="image">image1</property>
                     <property name="always_show_image">True</property>
-                    <signal name="pressed" handler="onButton1Pressed" swapped="no"/>
                     <signal name="clicked" handler="onButton1Pressed" swapped="no"/>
                   </object>
                   <packing>

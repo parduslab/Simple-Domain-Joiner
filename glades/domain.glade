@@ -300,7 +300,6 @@ using the same computer name.
                 <property name="image">image2</property>
                 <property name="relief">half</property>
                 <property name="always_show_image">True</property>
-                <signal name="pressed" handler="onButton1Pressed" swapped="no"/>
                 <signal name="clicked" handler="onButton1Pressed" swapped="no"/>
               </object>
               <packing>
