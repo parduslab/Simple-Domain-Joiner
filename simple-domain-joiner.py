@@ -15,18 +15,23 @@ def mainDomain():
 			Gtk.main_quit(*args)
 		
 		def onButton1Pressed(self, button1):
+			hosts = Host()
+			kerberos = Kerberos()
+			samba = Samba()
+			nsswitch = Nsswitch()
+			domain = Domain()
 			global WINBIND
 			if (WINBIND > 0):
-				winbind_on()
+				nsswitch.on()
 			else:
-				winbind_off()
+				nsswitch.off()
 			entry1 = builder.get_object("entry1")
 			entry2 = builder.get_object("entry2")
 			host = entry1.get_text()
 			realm = entry2.get_text()
 			if(radio2.get_active()):
 				rlist = list()
-				rlist = get_actual_realm(realm)
+				rlist = samba.get_domain_info(realm)
 				if(rlist[0] == "error"):
 					builderInvIp.add_from_file("glades/domain_invalid_ip.glade")
 					windowInvIp = builderInvIp.get_object("window1")
@@ -35,12 +40,14 @@ def mainDomain():
 				else:
 					realm = rlist[0]
 					workgroup = rlist[1]
-					set_hostname(host)
-					set_hosts(host, realm)
-					set_samba(host, realm, workgroup)
-					set_kerberos(realm)
-					add_host()
-					add_server()
+					hosts.set(host)
+					hosts.add_realm(host, realm)
+					samba.set(host, realm, workgroup)
+					kerberos.add_realm(realm)
+					kerberos.add_domain(realm)
+					kerberos.set_default_realm(realm)
+					hosts.add_ldapServer()
+					domain.add_server()
 					builder2.add_from_file("glades/domain_add.glade")
 					window2 = builder2.get_object("window1")
 					button_add_confirm = builder2.get_object("button1")
@@ -51,19 +58,19 @@ def mainDomain():
 					window2.show_all()
 					builder2.connect_signals(Handler2())
 			else:
-				current_name = get_hostname()
-				current_workgroup = get_workgroup()
-				set_hostname(host)
-				update_hosts(host)
-				update_samba(host)
+				current_name = hosts.get()
+				current_workgroup = samba.get_workgroup()
+				hosts.set(host)
+				hosts.update_hostname(host)
+				samba.update(host)
 				builder3.add_from_file("glades/domain_update_host.glade")
 				window3 = builder3.get_object("window1")
 				label = builder3.get_object("label1")
-				if not(current_workgroup == get_workgroup()) and not(current_name == get_hostname()):
+				if not(current_workgroup == samba.get_workgroup()) and not(current_name == hosts.get()):
 					label.set_text("Domain has changed to local\nHostname has updated to \""+host+"\".")
-				elif not(current_name == get_hostname()) and (current_workgroup == get_workgroup()):
+				elif not(current_name == hosts.get()) and (current_workgroup == samba.get_workgroup()):
 					label.set_text("Hostname has updated to \""+host+"\".")
-				elif not(current_workgroup == get_workgroup()) and (current_name == get_hostname()):
+				elif not(current_workgroup == samba.get_workgroup()) and (current_name == hosts.get()):
 					label.set_text("Domain has changed to local.")
 				else:
 					label.set_text("Nothing has changed.")
@@ -106,18 +113,20 @@ def mainDomain():
 			entry1 = builder2.get_object("entry1")
 			entry2 = builder2.get_object("entry2")
 			entry3 = builder.get_object("entry2")
+			domain = Domain()
+			kerberos = Kerberos()
 			host = entry1.get_text()
 			password_host = entry2.get_text()
 			realm = entry3.get_text()
-			output = add_to_domain(host, realm, password_host)
-			configure_pam()
-			configure_kerberos()
-			check = confirm()
+			output = domain.add(host, realm, password_host)
+			domain.configure_pam()
+			kerberos.configure()
+			check = domain.confirm()
 			print (check)
 			if((("Joined") in check) and (("to dns domain") in check)):
 				builder_success.add_from_file("glades/domain_success.glade")
 				window = builder_success.get_object("window1")
-				text = confirm()
+				text = domain.confirm()
 				ltest = list()
 				buffer_text = ""
 				for c in text:
@@ -168,7 +177,7 @@ def mainDomain():
 			else:
 				builder_success.add_from_file("glades/domain_success.glade")
 				window = builder_success.get_object("window1")
-				text = confirm()
+				text = domain.confirm()
 				ltest = list()
 				buffer_text = ""
 				for c in text:
@@ -291,6 +300,9 @@ def mainDomain():
 	builder3 = Gtk.Builder()
 	builderAbout = Gtk.Builder()
 	builderInvIp = Gtk.Builder()
+	samba = Samba()
+	host = Host()
+	nsswitch = Nsswitch()
 	builder.add_from_file("glades/domain.glade")
 	window = builder.get_object("window1")
 	cancel_button = builder.get_object("cancel_button")
@@ -299,10 +311,10 @@ def mainDomain():
 	radio2 = builder.get_object("radiobutton2")
 	entry_username = builder.get_object("entry1")
 	entry_realm = builder.get_object("entry2")
-	host = get_hostname()
-	entry_username.set_text(host)
-	entry_realm.set_text(get_realm().replace("\n",""))
-	winbind = nsswitch_check()
+	computer_name = host.get()
+	entry_username.set_text(computer_name)
+	entry_realm.set_text(samba.get_realm().replace("\n",""))
+	winbind = nsswitch.check()
 	if (winbind == "removed"):
 		radio1.set_active(True)
 		radio2.set_active(False)
