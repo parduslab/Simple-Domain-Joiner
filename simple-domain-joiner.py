@@ -16,10 +16,8 @@ def mainDomain():
 		
 		def onButton1Pressed(self, button1):
 			hosts = Host()
-			kerberos = Kerberos()
 			samba = Samba()
 			nsswitch = Nsswitch()
-			domain = Domain()
 			global WINBIND
 			if (WINBIND > 0):
 				nsswitch.on()
@@ -40,14 +38,6 @@ def mainDomain():
 				else:
 					realm = rlist[0]
 					workgroup = rlist[1]
-					hosts.set(host)
-					hosts.add_realm(host, realm)
-					samba.set(host, realm, workgroup)
-					kerberos.add_realm(realm)
-					kerberos.add_domain(realm)
-					kerberos.set_default_realm(realm)
-					hosts.add_ldapServer()
-					domain.add_server()
 					builder2.add_from_file("glades/domain_add.glade")
 					window2 = builder2.get_object("window1")
 					button_add_confirm = builder2.get_object("button1")
@@ -56,7 +46,7 @@ def mainDomain():
 					button_add_confirm.set_can_default(True)
 					button_add_confirm.grab_default()
 					window2.show_all()
-					builder2.connect_signals(Handler2())
+					builder2.connect_signals(Handler2(host, realm, workgroup))
 			else:
 				current_name = hosts.get()
 				current_workgroup = samba.get_workgroup()
@@ -105,31 +95,61 @@ def mainDomain():
 			aboutWindow.show_all()
 		
 
-	class Handler2:
+	class Handler2():
+		
+		def __init__(self, host, realm, workgroup):
+			self.host = host
+			self.realm = realm
+			self.workgroup = workgroup
+		
 		def onDeleteWindow(self, *args):
 			Gtk.main_quit(*args)
 		
 		def onButton1Pressed(self, button1):
+			hosts = Host()
+			kerberos = Kerberos()
+			samba = Samba()
+			domain = Domain()
 			entry1 = builder2.get_object("entry1")
 			entry2 = builder2.get_object("entry2")
 			entry3 = builder.get_object("entry2")
 			domain = Domain()
 			kerberos = Kerberos()
-			host = entry1.get_text()
+			userName = entry1.get_text()
+			host = self.host
 			password_host = entry2.get_text()
-			realm = entry3.get_text()
-			output = domain.add(host, realm, password_host)
+			realm = self.realm
+			workgroup = self. workgroup
+			hosts.set(host)
+			hosts.add_realm(host, realm)
+			samba.set(host, realm, workgroup)
+			kerberos.add_realm(realm)
+			kerberos.add_domain(realm)
+			kerberos.set_default_realm(realm)
+			hosts.add_ldapServer()
+			domain.add_server()
+			output = domain.add(userName, realm, password_host)
 			domain.configure_pam()
 			kerberos.configure()
 			check = domain.confirm()
 			print (check)
-			if((("Joined") in check) and (("to dns domain") in check)):
+			success = list()
+			success.append("Joined")
+			success.append("to dns domain")
+			error1 = "No credentials cache found"
+			error2 = "Our netbios name can be at most 15 chars long"
+			error3 = "Client's credentials have been revoked while getting initial credentials"
+			error4 = "Password incorrect while getting initial credentials"
+			error5 = "failed to find DC for domain"
+			error6 = "Logon failure"
+			error7 = "Failed to set account flags for machine account"
+			if((success[0] in check) and (success[1] in check)):
 				builder_success.add_from_file("glades/domain_success.glade")
 				window = builder_success.get_object("window1")
-				text = domain.confirm()
+				hosts.update_xauth(host)
 				ltest = list()
 				buffer_text = ""
-				for c in text:
+				for c in check:
 					if(c == "\n"):
 						ltest.append(buffer_text)
 						buffer_text = ""
@@ -144,57 +164,46 @@ def mainDomain():
 				builder_success.connect_signals(HandlerSuccess())
 				window2 = builder2.get_object("window1")
 				window2.destroy()
-			elif(("No credentials cache found")in output):
+			elif(error1 in output):
 				builder_err5.add_from_file("glades/domain_err5.glade")
 				window = builder_err5.get_object("window1")
 				window.show_all()
 				builder_err5.connect_signals(HandlerError5())
-			elif(("Our netbios name can be at most 15 chars long")in output):
+			elif(error2 in output):
 				builder_err6.add_from_file("glades/domain_err6.glade")
 				window = builder_err6.get_object("window1")
 				window.show_all()
 				builder_err6.connect_signals(HandlerError6())
-			elif(("Client's credentials have been revoked while getting initial credentials") in output):
+			elif(error3 in output):
 				builder_err1.add_from_file("glades/domain_err1.glade")
 				window = builder_err1.get_object("window1")
 				window.show_all()
 				builder_err1.connect_signals(HandlerError1())
-			elif(("Password incorrect while getting initial credentials") in output):
+			elif(error4 in output):
 				builder_err2.add_from_file("glades/domain_err2.glade")
 				window = builder_err2.get_object("window1")
 				window.show_all()
 				builder_err2.connect_signals(HandlerError2())
-			elif(("failed to find DC for domain") in output):
+			elif(error5 in output):
 				builder_err3.add_from_file("glades/domain_err3.glade")
 				window = builder_err3.get_object("window1")
 				window.show_all()
 				builder_err3.connect_signals(HandlerError3())
-			elif(("Logon failure") in output):
+			elif(error6 in output):
 				builder_err4.add_from_file("glades/domain_err4.glade")
 				window = builder_err4.get_object("window1")
 				window.show_all()
 				builder_err4.connect_signals(HandlerError4())
-			else:
-				builder_success.add_from_file("glades/domain_success.glade")
-				window = builder_success.get_object("window1")
-				text = domain.confirm()
-				ltest = list()
-				buffer_text = ""
-				for c in text:
-					if(c == "\n"):
-						ltest.append(buffer_text)
-						buffer_text = ""
-					else:
-						buffer_text = buffer_text + c
-				for line in ltest:
-					if ("Joined") in line:
-						text1 = line
-				label = builder_success.get_object("label1")
-				label.set_text(text1)
+			elif(error7 in output) or (error7 in check):
+				builder_err7.add_from_file("glades/domain_err7.glade")
+				window = builder_err7.get_object("window1")
 				window.show_all()
-				builder_success.connect_signals(HandlerSuccess())
-				window2 = builder2.get_object("window1")
-				window2.destroy()
+				builder_err7.connect_signals(HandlerError7())
+			else:
+				builder_err8.add_from_file("glades/domain_err8.glade")
+				window = builder_err8.get_object("window1")
+				window.show_all()
+				builder_err8.connect_signals(HandlerError8())
 		
 		def onButton2Pressed(self, button2):
 			window2 = builder2.get_object("window1")
@@ -248,7 +257,19 @@ def mainDomain():
 		def onButton1Pressed(self, button1):
 			window = builder3.get_object("window1")
 			window.destroy()
-	
+	class HandlerError7:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+		def onButton1Pressed(self, button1):
+			window = builder_err7.get_object("window1")
+			window.destroy()
+	class HandlerError8:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+		def onButton1Pressed(self, button1):
+			window = builder_err8.get_object("window1")
+			window.destroy()
+			
 	class AboutHandler:
 		def onDeleteWindow(self, *args):
 			Gtk.main_quit(*args)
@@ -296,6 +317,8 @@ def mainDomain():
 	builder_err4 = Gtk.Builder()
 	builder_err5 = Gtk.Builder()
 	builder_err6 = Gtk.Builder()
+	builder_err7 = Gtk.Builder()
+	builder_err8 = Gtk.Builder()
 	builder_success = Gtk.Builder()
 	builder3 = Gtk.Builder()
 	builderAbout = Gtk.Builder()

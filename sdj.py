@@ -1,10 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+This module that contains the backend methods of the 
+Simple Domain Joiner Project. All necessary configurations 
+are done using this module.
+"""
+
+# Libraries
 import os
 import sys
 import subprocess
 
+# Absolute paths of required files
 PATH_HOST = "/etc/hosts"
 PATH_NSSWITCH = "/etc/nsswitch.conf"
 PATH_KERBEROS = "/etc/krb5.conf"
@@ -13,6 +21,8 @@ PATH_SAMBA = "/etc/samba/smb.conf"
 class Nsswitch:
 	
 	def on(self):
+		"""Add `winbind` keyword to all necessary lines 
+		in the file `/etc/nsswitch.conf`."""
 		str1 = "winbind"
 		list1 = list()
 		with open(PATH_NSSWITCH, "r") as f:
@@ -32,6 +42,8 @@ class Nsswitch:
 		return ("\"winbind\" succesfully added.")
 	
 	def off(self):
+		"""Remove `winbind` keyword from all necessary lines
+		in the file `etc/nsswitch.conf`."""
 		str1 = "winbind"
 		list1 = list()
 		with open (PATH_NSSWITCH, "r") as f:
@@ -50,6 +62,7 @@ class Nsswitch:
 		return ("\"winbind\" successfully removed.")
 	
 	def check(self):
+		"""Check if the keyword `winbind` added or removed."""
 		with open (PATH_NSSWITCH, "r") as f:
 			for line in f :
 				if (("passwd") in line) and (("winbind") in line):
@@ -59,9 +72,11 @@ class Nsswitch:
 class Host:
 	
 	def get(self):
+		"""Return the output of the terminal command `hostname`."""
 		return ((os.popen('hostname').read()).replace("\n",""))
 	
 	def read(self):
+		"""Return the content of the file `/etc/hosts`."""
 		rf = open(PATH_HOST, "r")
 		list1 = list()
 		str1 = rf.readline()
@@ -71,10 +86,11 @@ class Host:
 			str1 = rf.readline()
 		rf.close()	
 		list1.pop()
-		for line in list1:
-			print (line.replace("\n",""))
+		return list1
 	
 	def search(self, str2):
+		"""Search if an entry exists in the file `/etc/hosts`
+		Return the index of the line exists otherwise return `not found`."""
 		sf = open (PATH_HOST, "r")
 		str1 = sf.readline()
 		counter = 0
@@ -96,6 +112,8 @@ class Host:
 		sf.close()
 	
 	def check(self, str2):
+		"""Check is an entry exists in the file `/etc/hosts` 
+		if exists return True otherwise return False."""
 		sf = open (PATH_HOST, "r")
 		str1 = sf.readline()
 		counter = 1
@@ -110,6 +128,8 @@ class Host:
 		return False
 	
 	def add(self, str2, str3):
+		"""Add a new entry after the last entry.
+		Do not add if the entry already exists."""
 		if (self.check(str2) or self.check(str3)):
 			print ("Failed! Either IP address or Hostname already exists")
 			return
@@ -136,6 +156,8 @@ class Host:
 		print ("\""+str2 + str3+"\"" +" added ")
 	
 	def remove(self, str3):
+		"""Remove the line at given index.
+		Return a notification if index is out of bounds."""
 		list1 = list()
 		index = (int(str3) - 1)
 		counter = 0
@@ -160,6 +182,8 @@ class Host:
 		print ("\""+str4+"\""+" removed ")
 	
 	def edit(self, str4, str2, str3):
+		"""Update the content of the line at given index.
+		Return a notification if index is out of bounds."""
 		index = int(str4) -1
 		counter = 0
 		str1 = list()
@@ -190,6 +214,9 @@ class Host:
 		print ("line "+ str(index+1)+ " changed to "+ "\""+ str2+ str3+ "\""+ "\n\n")
 	
 	def add_ldapServer(self):
+		"""Get the IP address and the name of the LDAP server from
+		the output of the terminal command `net ads info` and
+		add this as a new entry to the file `/etc/hosts`."""
 		output = subprocess.check_output("net ads info", shell=True)
 		tbuffer = ""
 		out = list()
@@ -204,6 +231,8 @@ class Host:
 		self.add(ip_address, hostname.lower())
 	
 	def update_hostname(self, hostname):
+		"""Update the hostname of the entry 
+		with the IP address `127.0.1.1`."""
 		etc_hosts = list()
 		with open(PATH_HOST, "r") as host:
 			for line in host:
@@ -217,6 +246,9 @@ class Host:
 				host.write(line)
 	
 	def add_realm(self, hostname, realm):
+		"""Update the hostname of the entry 
+		with the IP address `127.0.1.1` and
+		add the given realm to the entry."""
 		etc_hosts = list()
 		with open(PATH_HOST, "r") as host:
 			for line in host:
@@ -231,18 +263,23 @@ class Host:
 				host.write(line)
 	
 	def set(self, hostname):
+		"""Update the content of the file `/etc/hostname`."""
 		with open("/etc/hostname", "w") as host:
 			host.write(hostname+ "\n")
+	
+	def update_xauth(self, hostname):
+		"""Make necessary display reconfigurations."""
 		oldHostname = self.get()
 		os.system('%s' % ("hostname "+ hostname))
 		os.system('xauth add `echo $(hostname)/$(xauth list | cut -d" " -f1 | cut -d"/" -f2) $(xauth list | cut -d" " -f3,5)`')
 		if not(oldHostname == hostname):
 			os.system('xauth remove $(echo $(xauth list | head -1 | cut -d" " -f1))')
 	
-	
 class Kerberos:
 	
 	def create(self, default_realm):
+		"""Create `/etc/krb5.conf` file with a fixed format 
+		and set the given realm as default realm."""
 		kerberos = open(LOCATION, "w")
 		kerberos.write("[logging]\n")
 		kerberos.write("default=FILE:/var/log/krb5.log\n")
@@ -273,6 +310,7 @@ class Kerberos:
 		self.add_realm(default_realm)
 	
 	def read(self):
+		"""Return the content of `/etc/krb5.conf`."""
 		content = list()
 		with open(PATH_KERBEROS, "r") as kerberos:
 			for line in kerberos:
@@ -280,6 +318,7 @@ class Kerberos:
 		return content
 	
 	def set_default_realm(self, realm):
+		"""Update the default realm of `/etc/krb5.conf`."""
 		content = list()
 		with open(PATH_KERBEROS, "r") as kerberos:
 			for line in kerberos:
@@ -292,6 +331,8 @@ class Kerberos:
 				kerberos.write(line)
 	
 	def add_domain(self, realm):
+		"""Add a new domain entry to `/etc/krb5.conf`. 
+		Return a notification if already exists in the file."""
 		domain = realm
 		with open(PATH_KERBEROS, "r") as kerberos:
 			for line in kerberos:
@@ -325,6 +366,8 @@ class Kerberos:
 		return ("\""+ domain.upper()+ "\""+ " succesfully added to \""+ realm+ "\"")
 	
 	def add_realm(self, realm):
+		"""Add a new realm entry to `/etc/krb5.conf`. 
+		Return a notification if already exists in the file."""
 		with open(PATH_KERBEROS, "r") as kerberos:
 			for line in kerberos:
 				if( "default_domain" in line and realm in line ):
@@ -345,6 +388,10 @@ class Kerberos:
 		return ("realm "+ realm+ " succesfully added.")
 	
 	def add_server(self, realm, server, hostname):
+		"""Take the server and the server type as argument
+		add it as a server entry to the given realm.
+		Return a notification if the server entry 
+		already exists in the given realm."""
 		counter1 = 0
 		flag1 = 0
 		counter2 = 0
@@ -405,6 +452,8 @@ class Kerberos:
 			return ("Invalid server!")
 	
 	def configure(self):
+		"""Check some kerberos configurations.
+		Make necessary configurations if they are not set."""
 		flag_libdefaults = 0
 		flag_realms = 0
 		flag_appdefault = 0
@@ -583,8 +632,9 @@ class Domain:
 		return (text)
 	
 	def confirm(self):
+		check = ""
 		check = (os.popen('%s' % ("net ads join -k")).read())
-		return check
+		return (check)
 	
 	def configure_pam(self):
 		content = list()
