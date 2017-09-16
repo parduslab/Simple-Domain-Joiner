@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-This module that contains the backend methods of the 
+This module contains the backend methods of the 
 Simple Domain Joiner Project. All necessary configurations 
 are done using this module.
 """
@@ -89,8 +89,8 @@ class Host:
 		return list1
 	
 	def search(self, str2):
-		"""Search if an entry exists in the file `/etc/hosts`
-		Return the index of the line exists otherwise return `not found`."""
+		"""Search if an entry exists in the file `/etc/hosts`.
+		If exists return the index of the line otherwise return `not found`."""
 		sf = open (PATH_HOST, "r")
 		str1 = sf.readline()
 		counter = 0
@@ -112,8 +112,8 @@ class Host:
 		sf.close()
 	
 	def check(self, str2):
-		"""Check is an entry exists in the file `/etc/hosts` 
-		if exists return True otherwise return False."""
+		"""Check if an entry exists in the file `/etc/hosts`.
+		If exists return True otherwise return False."""
 		sf = open (PATH_HOST, "r")
 		str1 = sf.readline()
 		counter = 1
@@ -216,7 +216,7 @@ class Host:
 	def add_ldapServer(self):
 		"""Get the IP address and the name of the LDAP server from
 		the output of the terminal command `net ads info` and
-		add this as a new entry to the file `/etc/hosts`."""
+		add it as a new entry to the file `/etc/hosts`."""
 		output = subprocess.check_output("net ads info", shell=True)
 		tbuffer = ""
 		out = list()
@@ -248,7 +248,7 @@ class Host:
 	def add_realm(self, hostname, realm):
 		"""Update the hostname of the entry 
 		with the IP address `127.0.1.1` and
-		add the given realm to the entry."""
+		add the given realm to this entry."""
 		etc_hosts = list()
 		with open(PATH_HOST, "r") as host:
 			for line in host:
@@ -389,7 +389,7 @@ class Kerberos:
 	
 	def add_server(self, realm, server, hostname):
 		"""Take the server and the server type as argument
-		add it as a server entry to the given realm.
+		add them as a new server entry to the given realm.
 		Return a notification if the server entry 
 		already exists in the given realm."""
 		counter1 = 0
@@ -538,6 +538,8 @@ class Kerberos:
 class Samba:
 	
 	def set(self, hostname, realm, workgroup):
+		"""Create `/etc/samba/smb.conf` with a fixed format.
+		Add given hostname, realm and workgroup to the appropriate lines."""
 		with open(PATH_SAMBA, "w") as samba:
 			samba.write("workgroup = "+ workgroup+ "\n")
 			samba.write("domain logons = yes\n")
@@ -558,6 +560,7 @@ class Samba:
 			samba.write("security = ADS\n")
 	
 	def read(self):
+		"""Return the content of the `/etc/samba/smb.conf`."""
 		content = list()
 		with open(PATH_SAMBA, "r") as samba:
 			for line in samba:
@@ -565,6 +568,7 @@ class Samba:
 		return content
 	
 	def update(self, hostname):
+		"""Change hostname, workgroup and realm in `/etc/samba/smb.conf`."""
 		smb = list()
 		with open(PATH_SAMBA, "r") as samba:
 			for line in samba:
@@ -583,6 +587,7 @@ class Samba:
 				samba.write(line)
 	
 	def get_realm(self):
+		"""Return the current realm from `/etc/samba/smb.conf`."""
 		with open(PATH_SAMBA, "r") as samba:
 			for line in samba:
 				if(("realm = ") in line):
@@ -590,12 +595,16 @@ class Samba:
 			return ("WORKGROUP")
 	
 	def get_workgroup(self):
+		"""Return the current workgroup from `/etc/samba/smb.conf`."""
 		with open(PATH_SAMBA, "r") as samba:
 			for line in samba:
 				if ("workgroup =") in line:
 					return line.replace("workgroup = ","")
 	
 	def get_domain_info(self, domain):
+		"""Return current realm and workgroup from the output of the
+		terminal command `samba-tool domain info`. If an error occurs
+		return an error notification instead."""
 		rlist = list()
 		try:
 			output = subprocess.check_output("%s" % ("samba-tool domain info "+ domain.upper()), shell=True)
@@ -625,6 +634,8 @@ class Samba:
 class Domain:
 	
 	def add(self, hostname, realm, password_user):
+		"""Run necessary terminal commands to join the given domain
+		and return the output of the commands."""
 		text = ""
 		text = text + ((os.popen('echo %s|kinit %s' % (password_user,hostname+"@"+realm.upper())).read()))
 		text = text + ((os.popen('klist').read()))
@@ -632,11 +643,16 @@ class Domain:
 		return (text)
 	
 	def confirm(self):
+		"""Check if the system joined the domain by running
+		a running a terminal command and return the output of the command."""
 		check = ""
 		check = (os.popen('%s' % ("net ads join -k")).read())
 		return (check)
 	
 	def configure_pam(self):
+		"""Check if some configuration lines are exist in the files
+		`/etc/pam.d/common-account` and `/etc/pam.d/common-password`.
+		Add necessary configuration lines if they do not exist."""
 		content = list()
 		with open("/etc/pam.d/common-account", "r") as pam:
 			for line in pam:
@@ -651,7 +667,6 @@ class Domain:
 		with open("/etc/pam.d/common-password", "r") as pam:
 			for line in pam:
 				if (("password") in line) and (("pam_krb5.so") in line):
-					# TODO: more stable with using awk
 					content.append(line.replace("minimum_uid=1000\n", "minimum_uid=10000\n"))
 				else:
 					content.append(line)
@@ -660,6 +675,8 @@ class Domain:
 				pam.write(line)
 	
 	def add_server(self):
+		"""Get LDAP server name and realm from the output of the terminal
+		command `net ads info` and add them as new server entries to the `/etc/krb5.conf`."""
 		output = subprocess.check_output("net ads info", shell=True)
 		tbuffer = ""
 		out = list()
