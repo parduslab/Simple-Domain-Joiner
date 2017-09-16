@@ -1,20 +1,36 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+"""
+GUI module of Simple Domain Joiner
+"""
+
+#Libraries
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 from sdj import*
 
+#A global variable that holds the state of `winbind`.
+#Equals to 1 if winbind is added to `/etc/nsswitch.conf`otherwise equals to 0
 global WINBIND
 
+#main function of the module
 def mainDomain():
 	
+	#Handler class of the main window of the GUI.
 	class Handler:
 		def onDeleteWindow(self, *args):
+			"""Delete-event handler"""
 			Gtk.main_quit(*args)
 		
 		def onButton1Pressed(self, button1):
+			"""Button-press-event handler for the `confirm` button.
+			Check if `winbind` is on or off.
+			If `winbind` is on check if the domain is valid.
+			If the domain is valid run required methods to join the domain.
+			If the domain is not valid display an error window.
+			If `winbind` is off only run methods that are required to update the hostname."""
 			hosts = Host()
 			samba = Samba()
 			nsswitch = Nsswitch()
@@ -68,20 +84,24 @@ def mainDomain():
 				builder3.connect_signals(Handler3())
 		
 		def onButton2Pressed(self, radiobutton2):
+			"""Button-press-event handler for the winbind-on radio-button."""
 			entry2 = builder.get_object("entry2")
 			entry2.set_editable(True)
 			act_win(1)
 		
 		def onButton3Pressed(self, radiobutton1):
+			"""Button-press-event handler for the winbind-off radio-button."""
 			entry2 = builder.get_object("entry2")
 			entry2.set_editable(False)
 			act_win(0)
 		
 		def onButton4Pressed(self, button4):
+			"""Button-press-event handler for the `cancel` button."""
 			window2 = builder.get_object("window1")
 			window2.destroy()
 			
 		def onButton5Pressed(self, button_about):
+			"""Button-press-event handler for the `about` button."""
 			builderAbout.add_from_file("glades/about.glade")
 			aboutWindow = builderAbout.get_object("window1")
 			revealer = builderAbout.get_object("revealer1")
@@ -94,18 +114,26 @@ def mainDomain():
 			builderAbout.connect_signals(AboutHandler())
 			aboutWindow.show_all()
 		
-
+	#Handler class of the login-window. 
 	class Handler2():
 		
 		def __init__(self, host, realm, workgroup):
+			"""constructor method that creates required objects 
+			to access the necessary methods for joining the domain. """
 			self.host = host
 			self.realm = realm
 			self.workgroup = workgroup
 		
 		def onDeleteWindow(self, *args):
+			"""Delete-event handler"""
 			Gtk.main_quit(*args)
 		
 		def onButton1Pressed(self, button1):
+			"""Button-press-event handler for the `confirm` button.
+			Call required methods to join the domain and to make 
+			all the necesssary configurations.
+			If succesfully joins the domain display a success message.
+			otherwise display the error window related with the error."""
 			hosts = Host()
 			kerberos = Kerberos()
 			samba = Samba()
@@ -206,9 +234,11 @@ def mainDomain():
 				builder_err8.connect_signals(HandlerError8())
 		
 		def onButton2Pressed(self, button2):
+			"""Button-press-event handler for the `cancel` button."""
 			window2 = builder2.get_object("window1")
 			window2.destroy()
-	
+			
+	#Handler classes of the other windows.
 	class HandlerError1:
 		def onDeleteWindow(self, *args):
 			Gtk.main_quit(*args)
@@ -301,14 +331,17 @@ def mainDomain():
 			windowInvIp.destroy()
 	
 	def reveal(self):
+		"""Activate the revealer in the `about` window."""
 		revealer = builderAbout.get_object("revealer1")
 		revealer.set_reveal_child(not revealer.get_reveal_child())
 	
 	def act_win(arg):
 		global WINBIND
 		WINBIND = arg
-	
+		
 	global WINBIND
+	
+	#Create Gtk objects to build the GUI.
 	builder = Gtk.Builder()
 	builder2 = Gtk.Builder()
 	builder_err1 = Gtk.Builder()
@@ -337,6 +370,9 @@ def mainDomain():
 	computer_name = host.get()
 	entry_username.set_text(computer_name)
 	entry_realm.set_text(samba.get_realm().replace("\n",""))
+	
+	#Check if `winbind` is on or off. 
+	#If it is on set the second entry editable set uneditable otherwise. 
 	winbind = nsswitch.check()
 	if (winbind == "removed"):
 		radio1.set_active(True)
@@ -360,4 +396,5 @@ def mainDomain():
 	window.connect("destroy", Gtk.main_quit)
 	Gtk.main()
 
+#Call the main function.
 mainDomain()
