@@ -1,0 +1,9 @@
+include src/glades/about.glade       
+include src/glades/domain_err1.glade  
+include src/glades/domain.glade             
+include src/glades/domain_success.glade
+include src/glades/domain_add.glade  
+include src/glades/domain_invalid_ip.glade  
+include src/glades/domain_update_host.glade
+include data/sdj.desktop
+recursive-include src *

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Simple Domain Joiner
+Comment=Simple Domain Joiner offers a very simple graphical user interface to change the domain of the system. Edit
+Exec=sdj
+TryExec=sdj
+Terminal=false
+Type=Application
+Icon=thunar
+Categories=System;
+Keywords=system;domain;

@@ -47,14 +47,14 @@ def mainDomain():
 				rlist = list()
 				rlist = samba.get_domain_info(realm)
 				if(rlist[0] == "error"):
-					builderInvIp.add_from_file("glades/domain_invalid_ip.glade")
+					builderInvIp.add_from_file("/usr/share/sdj/glades/domain_invalid_ip.glade")
 					windowInvIp = builderInvIp.get_object("window1")
 					windowInvIp.show_all()
 					builderInvIp.connect_signals(HandlerInvIp())
 				else:
 					realm = rlist[0]
 					workgroup = rlist[1]
-					builder2.add_from_file("glades/domain_add.glade")
+					builder2.add_from_file("/usr/share/sdj/glades/domain_add.glade")
 					window2 = builder2.get_object("window1")
 					button_add_confirm = builder2.get_object("button1")
 					entry_add_passw = builder2.get_object("entry2")
@@ -71,7 +71,7 @@ def mainDomain():
 				hosts.set(host)
 				hosts.update_hostname(host)
 				samba.update(host)
-				builder3.add_from_file("glades/domain_update_host.glade")
+				builder3.add_from_file("/usr/share/sdj/glades/domain_update_host.glade")
 				window3 = builder3.get_object("window1")
 				label = builder3.get_object("label1")
 				if not(current_workgroup == samba.get_workgroup()) and not(current_name == hosts.get()):
@@ -104,7 +104,7 @@ def mainDomain():
 			
 		def onButton5Pressed(self, button_about):
 			"""Button-press-event handler for the `about` button."""
-			builderAbout.add_from_file("glades/about.glade")
+			builderAbout.add_from_file("/usr/share/sdj/glades/about.glade")
 			aboutWindow = builderAbout.get_object("window1")
 			revealer = builderAbout.get_object("revealer1")
 			licenseButton = builderAbout.get_object("button1")
@@ -174,8 +174,13 @@ def mainDomain():
 			error5 = "failed to find DC for domain"
 			error6 = "Logon failure"
 			error7 = "Failed to set account flags for machine account"
+			
+			builder_err1.add_from_file("/usr/share/sdj/glades/domain_err1.glade")
+			window = builder_err1.get_object("window1")
+			window.show_all()
+			
 			if((success[0] in check) and (success[1] in check)):
-				builder_success.add_from_file("glades/domain_success.glade")
+				builder_success.add_from_file("/usr/share/sdj/glades/domain_success.glade")
 				window = builder_success.get_object("window1")
 				ltest = list()
 				buffer_text = ""
@@ -190,50 +195,60 @@ def mainDomain():
 						text1 = line
 				label = builder_success.get_object("label1")
 				label.set_text(text1)
-				window.show_all()
+				
 				builder_success.connect_signals(HandlerSuccess())
 				window2 = builder2.get_object("window1")
 				window2.destroy()
 			elif(error1 in output):
-				builder_err5.add_from_file("glades/domain_err5.glade")
-				window = builder_err5.get_object("window1")
-				window.show_all()
-				builder_err5.connect_signals(HandlerError5())
-			elif(error2 in output):
-				builder_err6.add_from_file("glades/domain_err6.glade")
-				window = builder_err6.get_object("window1")
-				window.show_all()
-				builder_err6.connect_signals(HandlerError6())
-			elif(error3 in output):
-				builder_err1.add_from_file("glades/domain_err1.glade")
-				window = builder_err1.get_object("window1")
-				window.show_all()
+				errorTextContent="User not found in database!"
+				label1 = builder_err1.get_object("errorText")
+				label1.set_text(errorTextContent)
 				builder_err1.connect_signals(HandlerError1())
+			elif(error2 in output):
+				errorTextContent="Computer Name too long!"
+				label1 = builder_err1.get_object("errorText")
+				label1.set_text(errorTextContent)
+				errorTextContent2="Computer name can not be longer than 15 characters."
+				label2 = builder_err1.get_object("errorText2")
+				label2.set_text(errorTextContent2)
+				builder_err1.connect_signals(HandlerError2())
+			elif(error3 in output):
+				errorTextContent="Too many failed attempts! Account locked out.\
+					Wait a few minutes to try again."
+				label1 = builder_err1.get_object("errorText")
+				label1.set_text(errorTextContent)
+				builder_err1.connect_signals(HandlerError3())
 			elif(error4 in output):
-				builder_err2.add_from_file("glades/domain_err2.glade")
-				window = builder_err2.get_object("window1")
-				window.show_all()
-				builder_err2.connect_signals(HandlerError2())
+				errorTextContent="Unauthorized user or incorrect password."
+				label1 = builder_err1.get_object("errorText")
+				label1.set_text(errorTextContent)
+				builder_err1.connect_signals(HandlerError4())
 			elif(error5 in output):
-				builder_err3.add_from_file("glades/domain_err3.glade")
-				window = builder_err3.get_object("window1")
-				window.show_all()
-				builder_err3.connect_signals(HandlerError3())
+				errorTextContent="Realm not found."
+				label1 = builder_err1.get_object("errorText")
+				label1.set_text(errorTextContent)
+				builder_err1.connect_signals(HandlerError5())
 			elif(error6 in output):
-				builder_err4.add_from_file("glades/domain_err4.glade")
-				window = builder_err4.get_object("window1")
-				window.show_all()
-				builder_err4.connect_signals(HandlerError4())
+				errorTextContent="Incorrect password."
+				label1 = builder_err1.get_object("errorText")
+				label1.set_text(errorTextContent)
+				builder_err1.connect_signals(HandlerError6())
 			elif(error7 in output) or (error7 in check):
-				builder_err7.add_from_file("glades/domain_err7.glade")
-				window = builder_err7.get_object("window1")
-				window.show_all()
-				builder_err7.connect_signals(HandlerError7())
+				errorTextContent="Failed to Join Domain!"
+				label1 = builder_err1.get_object("errorText")
+				label1.set_text(errorTextContent)
+				errorTextContent2="This computer name already exist in this domain."
+				label2 = builder_err1.get_object("errorText2")
+				label2.set_text(errorTextContent2)
+				builder_err1.connect_signals(HandlerError7())
 			else:
-				builder_err8.add_from_file("glades/domain_err8.glade")
-				window = builder_err8.get_object("window1")
-				window.show_all()
-				builder_err8.connect_signals(HandlerError8())
+				errorTextContent="Failed to Join Domain!"
+				label1 = builder_err1.get_object("errorText")
+				label1.set_text(errorTextContent)
+				errorTextContent2="An unknown error occured."
+				label2 = builder_err1.get_object("errorText")
+				label2.set_text(errorTextContent2)
+				builder_err1.connect_signals(HandlerError8())
 		
 		def onButton2Pressed(self, button2):
 			"""Button-press-event handler for the `cancel` button."""
@@ -241,6 +256,30 @@ def mainDomain():
 			window2.destroy()
 			
 	#Handler classes of the other windows.
+	class HandlerError3:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+		def onButton1Pressed(self, button1):
+			window = builder_err1.get_object("window1")
+			window.destroy()
+	class HandlerError6:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+		def onButton1Pressed(self, button1):
+			window = builder_err1.get_object("window1")
+			window.destroy()
+	class HandlerError5:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+		def onButton1Pressed(self, button1):
+			window = builder_err1.get_object("window1")
+			window.destroy()
+	class HandlerError4:
+		def onDeleteWindow(self, *args):
+			Gtk.main_quit(*args)
+		def onButton1Pressed(self, button1):
+			window = builder_err1.get_object("window1")
+			window.destroy()
 	class HandlerError1:
 		def onDeleteWindow(self, *args):
 			Gtk.main_quit(*args)
@@ -251,31 +290,7 @@ def mainDomain():
 		def onDeleteWindow(self, *args):
 			Gtk.main_quit(*args)
 		def onButton1Pressed(self, button1):
-			window = builder_err2.get_object("window1")
-			window.destroy()
-	class HandlerError3:
-		def onDeleteWindow(self, *args):
-			Gtk.main_quit(*args)
-		def onButton1Pressed(self, button1):
-			window = builder_err3.get_object("window1")
-			window.destroy()
-	class HandlerError4:
-		def onDeleteWindow(self, *args):
-			Gtk.main_quit(*args)
-		def onButton1Pressed(self, button1):
-			window = builder_err4.get_object("window1")
-			window.destroy()
-	class HandlerError5:
-		def onDeleteWindow(self, *args):
-			Gtk.main_quit(*args)
-		def onButton1Pressed(self, button1):
-			window = builder_err5.get_object("window1")
-			window.destroy()
-	class HandlerError6:
-		def onDeleteWindow(self, *args):
-			Gtk.main_quit(*args)
-		def onButton1Pressed(self, button1):
-			window = builder_err6.get_object("window1")
+			window = builder_err1.get_object("window1")
 			window.destroy()
 	class HandlerSuccess:
 		def onDeleteWindow(self, *args):
@@ -293,15 +308,14 @@ def mainDomain():
 		def onDeleteWindow(self, *args):
 			Gtk.main_quit(*args)
 		def onButton1Pressed(self, button1):
-			window = builder_err7.get_object("window1")
+			window = builder_err1.get_object("window1")
 			window.destroy()
 	class HandlerError8:
 		def onDeleteWindow(self, *args):
 			Gtk.main_quit(*args)
 		def onButton1Pressed(self, button1):
-			window = builder_err8.get_object("window1")
+			window = builder_err1.get_object("window1")
 			window.destroy()
-			
 	class AboutHandler:
 		def onDeleteWindow(self, *args):
 			Gtk.main_quit(*args)
@@ -322,7 +336,8 @@ def mainDomain():
 		def onButton2Pressed(self, button2):
 			text = builderAbout.get_object("text1")
 			textbuffer = text.get_buffer()
-			textbuffer.set_text("				Emre Balcı")
+			textbuffer.set_text("Emre Balcı (ebalci@gmail.com) \n \
+Ali Orhun Akkirman (aoakkirman@gmail.com) ")
 	
 	class HandlerInvIp:
 		def onDeleteWindow(self, *args):
@@ -347,13 +362,6 @@ def mainDomain():
 	builder = Gtk.Builder()
 	builder2 = Gtk.Builder()
 	builder_err1 = Gtk.Builder()
-	builder_err2 = Gtk.Builder()
-	builder_err3 = Gtk.Builder()
-	builder_err4 = Gtk.Builder()
-	builder_err5 = Gtk.Builder()
-	builder_err6 = Gtk.Builder()
-	builder_err7 = Gtk.Builder()
-	builder_err8 = Gtk.Builder()
 	builder_success = Gtk.Builder()
 	builder3 = Gtk.Builder()
 	builderAbout = Gtk.Builder()
@@ -361,7 +369,7 @@ def mainDomain():
 	samba = Samba()
 	host = Host()
 	nsswitch = Nsswitch()
-	builder.add_from_file("glades/domain.glade")
+	builder.add_from_file("/usr/share/sdj/glades/domain.glade")
 	window = builder.get_object("window1")
 	cancel_button = builder.get_object("cancel_button")
 	label = builder.get_object("label1")
@@ -399,4 +407,8 @@ def mainDomain():
 	Gtk.main()
 
 #Call the main function.
-mainDomain()
+def main():
+	mainDomain()
+
+if __name__ == "__main__":
+    main()
