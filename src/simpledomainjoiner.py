@@ -47,14 +47,14 @@ def mainDomain():
 				rlist = list()
 				rlist = samba.get_domain_info(realm)
 				if(rlist[0] == "error"):
-					builderInvIp.add_from_file("/usr/share/sdj/glades/domain_invalid_ip.glade")
+					builderInvIp.add_from_file("/usr/local/share/sdj/glades/domain_invalid_ip.glade")
 					windowInvIp = builderInvIp.get_object("window1")
 					windowInvIp.show_all()
 					builderInvIp.connect_signals(HandlerInvIp())
 				else:
 					realm = rlist[0]
 					workgroup = rlist[1]
-					builder2.add_from_file("/usr/share/sdj/glades/domain_add.glade")
+					builder2.add_from_file("/usr/local/share/sdj/glades/domain_add.glade")
 					window2 = builder2.get_object("window1")
 					button_add_confirm = builder2.get_object("button1")
 					entry_add_passw = builder2.get_object("entry2")
@@ -71,7 +71,7 @@ def mainDomain():
 				hosts.set(host)
 				hosts.update_hostname(host)
 				samba.update(host)
-				builder3.add_from_file("/usr/share/sdj/glades/domain_update_host.glade")
+				builder3.add_from_file("/usr/local/share/sdj/glades/domain_update_host.glade")
 				window3 = builder3.get_object("window1")
 				label = builder3.get_object("label1")
 				if not(current_workgroup == samba.get_workgroup()) and not(current_name == hosts.get()):
@@ -104,7 +104,7 @@ def mainDomain():
 			
 		def onButton5Pressed(self, button_about):
 			"""Button-press-event handler for the `about` button."""
-			builderAbout.add_from_file("/usr/share/sdj/glades/about.glade")
+			builderAbout.add_from_file("/usr/local/share/sdj/glades/about.glade")
 			aboutWindow = builderAbout.get_object("window1")
 			revealer = builderAbout.get_object("revealer1")
 			licenseButton = builderAbout.get_object("button1")
@@ -175,12 +175,12 @@ def mainDomain():
 			error6 = "Logon failure"
 			error7 = "Failed to set account flags for machine account"
 			
-			builder_err1.add_from_file("/usr/share/sdj/glades/domain_err1.glade")
+			builder_err1.add_from_file("/usr/local/share/sdj/glades/domain_err1.glade")
 			window = builder_err1.get_object("window1")
 			window.show_all()
 			
 			if((success[0] in check) and (success[1] in check)):
-				builder_success.add_from_file("/usr/share/sdj/glades/domain_success.glade")
+				builder_success.add_from_file("/usr/local/share/sdj/glades/domain_success.glade")
 				window = builder_success.get_object("window1")
 				ltest = list()
 				buffer_text = ""
@@ -369,7 +369,7 @@ Ali Orhun Akkirman (aoakkirman@gmail.com) ")
 	samba = Samba()
 	host = Host()
 	nsswitch = Nsswitch()
-	builder.add_from_file("/usr/share/sdj/glades/domain.glade")
+	builder.add_from_file("/usr/local/share/sdj/glades/domain.glade")
 	window = builder.get_object("window1")
 	cancel_button = builder.get_object("cancel_button")
 	label = builder.get_object("label1")
