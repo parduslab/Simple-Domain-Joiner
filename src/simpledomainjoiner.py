@@ -9,7 +9,7 @@ GUI module of Simple Domain Joiner
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
-from sdj import*
+from src.sdj import*
 
 #A global variable that holds the state of `winbind`.
 #Equals to 1 if winbind is added to `/etc/nsswitch.conf`otherwise equals to 0
