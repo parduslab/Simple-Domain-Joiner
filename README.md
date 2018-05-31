@@ -19,7 +19,7 @@ python3 setup.py install
 
 ### Run
 ```
-python3 simple-domain-joiner.py
+sdj
 ```
 ### Manual
 Enter the computer name and the domain address.
