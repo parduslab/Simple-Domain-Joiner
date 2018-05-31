@@ -12,6 +12,11 @@ All necesssary configurations are done in background.
 apt install libpam-krb5 libnss-winbind libpam-winbind winbind samba krb5-user
 ```
 
+### Setup
+```
+python3 setup.py install
+```
+
 ### Run
 ```
 python3 simple-domain-joiner.py
